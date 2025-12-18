@@ -9,12 +9,23 @@ class ModelWithParameter:
        self.px: int = 0
        self.model =None
 
+
+# Halley's method is a root solver:
+# solves F(x, p) = 0
+#
+
+class RootFindingProblem:
+    def __init__(self, residual_expr: ca.SX, x: ca.SX, p: ca.SX):
+        # self.residual_fun = residual_fun
+        # self.
+
+
 def halleys(model: ModelWithParameter, x0,p, epsilon):
-    F_evalue = ca.Function('evalue',[model.x, model.parameter],[ model.model])
+    F_fun = ca.Function('fun',[model.x, model.parameter],[ model.model])
     x_iter = x0
 
     jac = ca.jacobian(model.model,model.x)#sym F'
-    jac_evalue = ca.Function("jac_function", [model.x, model.parameter], [jac])#F'
+    jac_fun = ca.Function("jac_function", [model.x, model.parameter], [jac])#F'
 
     v_sym = ca.SX.sym("v_sym", model.nx)#sym V
 
@@ -25,8 +36,9 @@ def halleys(model: ModelWithParameter, x0,p, epsilon):
 
     while True:
         
-        JacInvF_evalued = np.linalg.solve(jac_evalue(x_iter, p), F_evalue(x_iter,p)) # F'^{-1} F
-        L_evalued= np.linalg.solve(jac_evalue(x_iter,p), H_eval(x_iter,p,JacInvF_evalued)) # L = F' * F'' * (F'{-1}* F)
+        # TODO: use factorization for the two solves?
+        JacInvF_evalued = np.linalg.solve(jac_fun(x_iter, p), F_fun(x_iter,p)) # F'^{-1} F
+        L_evalued= np.linalg.solve(jac_fun(x_iter,p), H_eval(x_iter,p,JacInvF_evalued)) # L = F' * F'' * (F'{-1}* F)
 
         D = np.linalg.solve((I-(0.5)*L_evalued).T,L_evalued.T).T       # D =  L * (I-0.5*L)^{-1}
 
@@ -34,9 +46,9 @@ def halleys(model: ModelWithParameter, x0,p, epsilon):
 
 
         x_iter = x_iter -update_evalued
-        answer_vector = F_evalue(x_iter,p)
+        answer_vector = F_fun(x_iter,p)
         # check if all components are near zero
-        if( all([(True if -epsilon<answer_vector[i]<epsilon else False) for i in range(model.nx)])):
+        if np.linalg.norm(update_evalued, np.inf) < epsilon:
             break
 
     return x_iter

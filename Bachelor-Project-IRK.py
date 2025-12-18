@@ -6,9 +6,24 @@ class Model:
     def __init__(self):
        self.x = None
        self.nx: int = 0
-       self.model =None
+       self.model = None
+        # model(x) = \dot{x}
 
 
+class IrkSolver:
+    def __init__(self, model: Model, root_solver_type: str, dt: float,
+                 max_iter: int = 100, tol: float = 1e-6,
+                 degree: int = 2, ):
+        #
+        # self.model = model
+        # TODO: create casadi functions
+        # degree -> stages
+        raise NotImplementedError()
+
+
+    def solve(self, x0):
+        # simulates for dt
+        return x_next
 
 
 def IRK(function: Model, x0, h, number_of_time_steps, root_solver, degree):
@@ -42,7 +57,6 @@ def IRK(function: Model, x0, h, number_of_time_steps, root_solver, degree):
         k2 - evalFunction(K.parameter+ h*(A[1,0]*k1 + A[1,1]*k2))
     )
 
-   
     for i in range(1, number_of_time_steps):
 
         # solve for K for a given f_iter
