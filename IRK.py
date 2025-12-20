@@ -89,13 +89,13 @@ class IRK:
             else:
                 self.RP.x = ca.vertcat(self.RP.x, ca.SX.sym(f"K_{i+1}", self.model.nx)) #[k1_1, k1_2, ..., k1_i,   K2_1,K2_2 ,..., K2_i, ..., KI_i...]
 
-        self.RP.dimP = self.model.nx #dimension of model.x with will be a const. parameter in each call of the root solver
+        self.RP.dimP = self.model.nx #dimension of model.x will be treated as a const. parameter in each call of the root solver
         self.RP.parameter = ca.SX.sym("f_sym", self.model.nx)
         
         for i in range(self.stages):# 
             k_i = self.RP.x[i*self.model.nx: (i+1)*self.model.nx]
             K_times_A =  ca.mtimes(ca.reshape( self.RP.x,self.model.nx, self.stages ),self.A[i,:].T)# K_i summed up with the weights a_i
-            root_i = k_i- self.model_func(self.RP.parameter+self.dt*(K_times_A))# the problem  0= k_i-f(x0+sum(k_i*a_i))
+            root_i = k_i- self.model_func(self.RP.parameter+self.dt*(K_times_A))# the problem  0= k_i-f(x0+sum all (k_i*a_i))
             if self.RP.Problem is None:
                 self.RP.Problem = root_i
             else:
@@ -147,6 +147,8 @@ class IRK:
         :param x0: start value for the next time step
         """
         # solve for K for a given x0
+        # Because rootSolver gives a vector with all k_i stacked on top  of each other,
+        # we have to reshape it into a matrix where each colum is a k_i
         K = ca.reshape(self.rootSolver(ca.DM.zeros(2*self.model.nx),x0), self.model.nx, self.stages)
 
         # update the value for the next time step 
