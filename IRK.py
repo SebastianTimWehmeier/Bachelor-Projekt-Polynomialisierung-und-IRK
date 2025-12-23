@@ -73,12 +73,12 @@ class IRK:
         """
         This function initializes the root finding problem
         which has the form of:
-        0 = k_i - f(x0 + dt* (sum all k_i*a_i))
+        0 = k_i - f(x0 + dt* (sum all k_j*a_j))
 
         in the end we will have a vector which consists  of all the k_i stack on top of each other
 
         self.RP.x are the k_i we are looking for
-        self.RP.parameter  is  that x0 
+        self.RP.parameter  is  the current x0 
 
         """
         self.RP = RootSolvingProblem()
@@ -109,13 +109,27 @@ class IRK:
         self.RP.Problem_H_v_func = ca.Function("H_v", [self.RP.x,self.RP.parameter,v_sym],[ ca.jtimes(jac, self.RP.x, v_sym)]) # sym F''* V
         self.RP.IDMatrix = ca.DM.eye(self.RP.dimX)
 
-    def Newton():
+    def Newton(self, k0,x0):
         """
+        Newton's method
+        root solving algorithm
+        
+
+        :param k0:  start initialization of the k_i
+        :param x0: current x value for which we calculate the k to determine the next step
         
         """
-        pass
+
+        for i in range(self.max_iter):
+            jac_inv_F = np.linalg.solve(self.RP.Problem_Jac_func(k0,x0), self.RP.Problem_func(k0,x0))
+            k0 = k0-jac_inv_F
+            if(np.linalg.norm(self.RP.Problem_func(k0,x0), np.inf) < self.tol):
+                break
+        return k0
+        
     def Halleys(self, k0,x0): 
         """
+        Halley's method
         root solving algorithm
         
 
@@ -170,7 +184,7 @@ if __name__ == "__main__":
     NumIterations= 1000-1
     dt = 0.001
     startCondition = ca.DM([1,1])
-    ImplicitRK = IRK(Problem,"Halleys",dt,1000)
+    ImplicitRK = IRK(Problem,"Newton",dt,1000)
 
     F_plot = [startCondition]
     T_plot = [0]
