@@ -109,6 +109,8 @@ class IRK:
         self.RP.Problem_H_v_func = ca.Function("H_v", [self.RP.x,self.RP.parameter,v_sym],[ ca.jtimes(jac, self.RP.x, v_sym)]) # sym F''* V
         self.RP.IDMatrix = ca.DM.eye(self.RP.dimX)
 
+        self.lastIterationCount =None # stores the last number of iterations needed by the root solver to solve that problem
+
     def Newton(self, k0,x0):
         """
         Newton's method
@@ -124,7 +126,9 @@ class IRK:
             jac_inv_F = np.linalg.solve(self.RP.Problem_Jac_func(k0,x0), self.RP.Problem_func(k0,x0))
             k0 = k0-jac_inv_F
             if(np.linalg.norm(self.RP.Problem_func(k0,x0), np.inf) < self.tol):
-                break
+                self.lastIterationCount=i+1
+                return k0
+        self.lastIterationCount= self.max_iter
         return k0
         
     def Halleys(self, k0,x0): 
@@ -149,8 +153,9 @@ class IRK:
 
             # check if all components are near zero
             if(np.linalg.norm(self.RP.Problem_func(k0,x0), np.inf) < self.tol):
-                break
-
+                self.lastIterationCount=i+1
+                return k0
+        self.lastIterationCount = self.max_iter
         return k0
     
  
@@ -162,9 +167,9 @@ class IRK:
         """
         # solve for K for a given x0
         # Because rootSolver gives a vector with all k_i stacked on top  of each other,
-        # we have to reshape it into a matrix where each colum is a k_i
+        # we have to reshape it into a matrix where each ith colum  is a k_i vector
         K = ca.reshape(self.rootSolver(ca.DM.zeros(2*self.model.nx),x0), self.model.nx, self.stages)
-
+        
         # update the value for the next time step 
         return x0 + self.dt * (K@self.B)# x0 + dt * sum all k_i*b_i
 
