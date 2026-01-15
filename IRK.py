@@ -19,7 +19,7 @@ class RootSolvingProblem:
        self.Problem_func = None # the function that should be zero
        self.Problem_Jac_func= None # the first derivative
        self.Problem_H_v_func = None # the second derivative directly multiplied by a vector v
-       #we  have to multiply the second derivative  with a vector to ensure not  have to work with a tensor
+       #we  have to multiply the second derivative  with a vector to ensure not to have to work with a tensor
 
 class IRK:
     def __init__(self, model:Model,root_solver_type: str, dt: float,
