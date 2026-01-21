@@ -23,7 +23,7 @@ class RootSolvingProblem:
 
 class IRK:
     def __init__(self, model:Model,root_solver_type: str, dt: float,
-                 max_iter: int = 100, tol: float = 1e-6,
+                 max_iter: int = 1000, tol: float = 1e-6,
                  stages: int = 2):
         """
         Initialize Implicit Runge Kutta
@@ -151,10 +151,8 @@ class IRK:
             JInvF = np.linalg.solve(jacTmp, self.RP.Problem_func(k0,x0)) # F'^{-1} F
             L = np.linalg.solve(jacTmp, self.RP.Problem_H_v_func(k0,x0,JInvF)) # L = F' * F'' * (F'{-1}* F)
             D = np.linalg.solve((self.RP.IDMatrix-(0.5)*L).T,L.T).T       # D =  L * (I-0.5*L)^{-1}
-            update = (self.RP.IDMatrix+(0.5)*D)@JInvF #  (I+0.5* D )* (F'^{-1} F)
-
-
-            k0 = k0 -update
+            
+            k0 = k0 - (self.RP.IDMatrix+(0.5)*D)@JInvF #x_i+1 =  x_i -(I+0.5* D )* (F'^{-1} F)
 
             # check if all components of the function at point k0 are near zero
             if(np.linalg.norm(self.RP.Problem_func(k0,x0), np.inf) < self.tol):
@@ -174,10 +172,10 @@ class IRK:
         # Because rootSolver will return a vector with all k_i stacked on top  of each other,
         # we have to reshape it into a matrix where each ith colum  is a k_i vector.
         # We do that so that we have to do in the next step just a matrix multiplication
-        K = ca.reshape(self.rootSolver(ca.DM.zeros(self.stages*self.model.nx),x0), self.model.nx, self.stages)
+        KM = ca.reshape(self.rootSolver(ca.DM.zeros(self.stages*self.model.nx),x0), self.model.nx, self.stages)
         
         # update the value for the next time step 
-        return x0 + self.dt * (K@self.B)# x0 + dt * sum all k_i*b_i
+        return x0 + self.dt * (KM@self.B)# x0 + dt * sum all k_i*b_i
 
         
 
@@ -195,7 +193,7 @@ if __name__ == "__main__":
     NumIterations= 1000-1
     dt = 0.001
     startCondition = ca.DM([1,1])
-    ImplicitRK = IRK(Problem,"Newton",dt,1000,stages=3)
+    ImplicitRK = IRK(Problem,"Newton",dt,1000,1e-6,3)
 
     F_plot = [startCondition]
     T_plot = [0]
