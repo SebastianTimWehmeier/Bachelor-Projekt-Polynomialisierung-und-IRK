@@ -7,8 +7,8 @@ import time
 
 def TestBench(P1:Model, P2:Model, numOfsteps:int, dt: float, startCondition1, startCondition2):
 
-    RK1 = IRK(P1,"Newton", dt,10000,1e-12)
-    RK2 = IRK(P2, "Halleys",dt, 10000,1e-12)
+    RK1 = IRK(P1,"Newton", dt,10000,1e-12,stages=2)
+    RK2 = IRK(P2, "Halleys",dt, 10000,1e-12, stages=2)
 
 
 

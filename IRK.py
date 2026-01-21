@@ -61,8 +61,13 @@ class IRK:
             self.A = ca.DM([[1/4, 1/4-sqrt(3)/6],
                     [1/4+sqrt(3)/6, 1/4]])
             self.B = ca.DM([1/2, 1/2])
-        else: 
-            raise NotImplemented("not implemented")
+        elif stages==3: 
+            self.A = ca.DM([[5/36,(2/9)-(1/15)*sqrt(15),(5/36)-(1/30)*sqrt(15)],
+                            [(5/36)+(1/24)*sqrt(15),2/9, (5/36)-(1/24)*sqrt(15)],
+                            [(5/36)+(1/30)*sqrt(15),(2/9)+(1/15)*sqrt(15), 5/36 ]])
+            self.B = ca.DM([5/18,4/9,5/18])
+        else:
+            raise NotImplemented("choose between 2 and 3 for the 'stages' value")
 
         self.model_func = ca.Function("model_func", [self.model.x], [self.model.model])
         self.Initialize_RootSolving_Problem()
@@ -94,8 +99,8 @@ class IRK:
         
         for i in range(self.stages):# 
             k_i = self.RP.x[i*self.model.nx: (i+1)*self.model.nx]
-            K_times_A =  ca.mtimes(ca.reshape( self.RP.x,self.model.nx, self.stages ),self.A[i,:].T)# K_i summed up with the weights a_i
-            root_i = k_i- self.model_func(self.RP.parameter+self.dt*(K_times_A))# the problem  0= k_i-f(x0+sum all (k_i*a_i))
+            K_times_A =  ca.mtimes(ca.reshape( self.RP.x,self.model.nx, self.stages ),self.A[i,:].T)# K_i summed up with the weights a_ij
+            root_i = k_i- self.model_func(self.RP.parameter+self.dt*(K_times_A))# the problem  0= k_i-f(x0+sum all (k_j*a_ij))
             if self.RP.Problem is None:
                 self.RP.Problem = root_i
             else:
@@ -166,8 +171,9 @@ class IRK:
         :param x0: start value for the next time step
         """
         # solve for K for a given x0
-        # Because rootSolver gives a vector with all k_i stacked on top  of each other,
-        # we have to reshape it into a matrix where each ith colum  is a k_i vector
+        # Because rootSolver will return a vector with all k_i stacked on top  of each other,
+        # we have to reshape it into a matrix where each ith colum  is a k_i vector.
+        # We do that so that we have to do in the next step just a matrix multiplication
         K = ca.reshape(self.rootSolver(ca.DM.zeros(self.stages*self.model.nx),x0), self.model.nx, self.stages)
         
         # update the value for the next time step 
@@ -189,7 +195,7 @@ if __name__ == "__main__":
     NumIterations= 1000-1
     dt = 0.001
     startCondition = ca.DM([1,1])
-    ImplicitRK = IRK(Problem,"Newton",dt,1000)
+    ImplicitRK = IRK(Problem,"Newton",dt,1000,stages=3)
 
     F_plot = [startCondition]
     T_plot = [0]
