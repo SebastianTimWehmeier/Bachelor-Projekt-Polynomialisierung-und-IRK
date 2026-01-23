@@ -136,30 +136,6 @@ class IRK:
         self.lastIterationCount= self.max_iter
         return k0
         
-    def Halleys1(self, k0,x0): 
-        """
-        Halley's method
-        root solving algorithm
-        
-
-        :param k0:  start initialization of the k_i
-        :param x0: current x value for which we calculate the k to determine the next step
-        """
-        for i in range(self.max_iter):
-            jacTmp = self.RP.Problem_Jac_func(k0, x0)# Evaluation of the first derivative
-            
-            JInvF = np.linalg.solve(jacTmp, self.RP.Problem_func(k0,x0)) # F'^{-1} F
-            L = np.linalg.solve(jacTmp, self.RP.Problem_H_v_func(k0,x0,JInvF)) # L = F' * F'' * (F'{-1}* F)
-            D = np.linalg.solve((self.RP.IDMatrix-(0.5)*L).T,L.T).T       # D =  L * (I-0.5*L)^{-1}
-            
-            k0 = k0 - (self.RP.IDMatrix+(0.5)*D)@JInvF #x_i+1 =  x_i -(I+0.5* D )* (F'^{-1} F)
-
-            # check if all components of the function at point k0 are near zero
-            if(np.linalg.norm(self.RP.Problem_func(k0,x0), np.inf) < self.tol):
-                self.lastIterationCount = i+1 #store the needed iteration
-                return k0
-        self.lastIterationCount = self.max_iter
-        return k0
     
     def Halleys(self, k0, x0):
         """
