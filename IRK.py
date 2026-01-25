@@ -22,7 +22,7 @@ class RootSolvingProblem:
        #we  have to multiply the second derivative  with a vector to ensure not to have to work with a tensor
 
 class IRK:
-    def __init__(self, model:Model,root_solver_type: str, dt: float,
+    def __init__(self, model:Model,root_solver: str, dt: float,
                  max_iter: int = 1000, tol: float = 1e-6,
                  stages: int = 2):
         """
@@ -30,8 +30,8 @@ class IRK:
         
         :param model: Model to simulate
         :type model: Model
-        :param root_solver_type: Name of the root solving algorithm
-        :type root_solver_type: str
+        :param root_solver: Name of the root solving algorithm
+        :type root_solver: str
         :param dt: time step distance
         :type dt: float
         :param max_iter: max num of iteration
@@ -45,9 +45,9 @@ class IRK:
 
         #assign which root solver you want to use
         self.rootSolver =None
-        if root_solver_type == "Halleys":
+        if root_solver == "Halleys":
             self.rootSolver = self.Halleys
-        elif root_solver_type == "Newton":
+        elif root_solver == "Newton":
             self.rootSolver = self.Newton
         else:
             raise ValueError("this root solver doesn't exsits")
@@ -100,7 +100,7 @@ class IRK:
         for i in range(self.stages):# 
             k_i = self.RP.x[i*self.model.nx: (i+1)*self.model.nx]
             K_times_A =  ca.mtimes(ca.reshape( self.RP.x,self.model.nx, self.stages ),self.A[i,:].T)# K_i summed up with the weights a_ij
-            root_i = k_i- self.model_func(self.RP.parameter+self.dt*(K_times_A))# the problem  0= k_i-f(x0+sum all (k_j*a_ij))
+            root_i = k_i- self.model_func(self.RP.parameter+self.dt*(K_times_A))# the problem  0= k_i-f(x0+ dt *sum all (k_j*a_ij))
             if self.RP.Problem is None:
                 self.RP.Problem = root_i
             else:
@@ -191,7 +191,7 @@ if __name__ == "__main__":
     NumIterations= 1000-1
     dt = 0.001
     startCondition = ca.DM([1,1])
-    ImplicitRK = IRK(Problem,"Newton",dt,1000,1e-6,3)
+    ImplicitRK = IRK(model=Problem,root_solver="Newton",dt=dt,max_iter=1000,tol=1e-6,stages=3)
 
     F_plot = [startCondition]
     T_plot = [0]
