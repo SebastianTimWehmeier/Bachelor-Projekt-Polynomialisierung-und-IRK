@@ -76,13 +76,15 @@ def TestBench2(P1:Model, P2:Model,P3:Model ,timeToSimulate:int, dt: float, start
 
         
     # simulate
-    F_plot1, T_plot, needed_iterations_plot1, executionTimePlot1 = simulateFor(RK1,int(timeToSimulate/dt),dt,startCondition1)
-    F_plot2, _, needed_iterations_plot2, executionTimePlot2 = simulateFor(RK2,int(timeToSimulate/dt),dt,startCondition2)
-    F_plot3, _, needed_iterations_plot3, executionTimePlot3 = simulateFor(RK3,int(timeToSimulate/dt),dt,startCondition2)
+    F_plot1, T_plot, _, _ = simulateFor(RK1,int(timeToSimulate/dt),dt,startCondition1)
+    F_plot2, _, _, _ = simulateFor(RK2,int(timeToSimulate/dt),dt,startCondition2)
+    F_plot3, _, _, _ = simulateFor(RK3,int(timeToSimulate/dt),dt,startCondition2)
 
     #plot answer
     originalGraph = np.array( [float(F_plot1[i]) for i in range(len(F_plot1))])
-    difference = np.array([abs(float(F_plot1[i]-F_plot3[i][0])) for i in range(len(F_plot2))])
+    difference1 = np.array([abs(float(F_plot1[i]-F_plot2[i][0])) for i in range(len(F_plot2))])
+    difference2 = np.array([abs(float(F_plot1[i]-F_plot3[i][0])) for i in range(len(F_plot2))])
+
 
     errorPlot1 = []
     meanTimePlot1 = []
@@ -98,7 +100,7 @@ def TestBench2(P1:Model, P2:Model,P3:Model ,timeToSimulate:int, dt: float, start
     averageIterationPlot3 = []
 
     deltaT = []
-    for i in range(3,10):#
+    for i in range(5,10):#
         numberOfSteps = 2**i
         print(numberOfSteps)
         RK1.dt = timeToSimulate/numberOfSteps
@@ -127,7 +129,7 @@ def TestBench2(P1:Model, P2:Model,P3:Model ,timeToSimulate:int, dt: float, start
         averageIterationPlot2 += [iterAverage2]
         averageIterationPlot3 += [iterAverage3]
 
-    T_plot,originalGraph,difference,
+    T_plot,originalGraph,difference1,difference2,
     deltaT.reverse()
     errorPlot1.reverse()
     errorPlot2.reverse()
@@ -141,23 +143,45 @@ def TestBench2(P1:Model, P2:Model,P3:Model ,timeToSimulate:int, dt: float, start
     meanTimePlot2.reverse()
     meanTimePlot3.reverse()
 
-    
+
     pyPlot(T_plot, originalGraph, "Time", "Value", "orginal Graph")
-    pyPlot(T_plot, difference, "Time", "Value", "differnce between original System and ")
-    pyPlot(deltaT, errorPlot1, "delta T", "error", "differnce depending on the step size (Newton)")
-    pyPlot(deltaT, errorPlot2, "delta T", "error", "differnce depending on the step size (Halleys)")
-    pyPlot(deltaT, errorPlot3, "delta T", "error", "differnce depending on the step size (Newton)")
+    pyPlot2(T_plot, difference1,difference2, "Time", "Value","orginal vs. poly. Halley", "orginal vs. poly. newton", "differnce between original System and ")
+    pyPlot3(deltaT, errorPlot1,errorPlot2,errorPlot3, "delta T", "error","orginal (Newton)", "poly (Halley)", "poly (Newton)", "differnce depending on the step size ")
+    pyPlot3(deltaT, meanTimePlot1,meanTimePlot2,meanTimePlot3, "delta T","mean time","orginal (Newton)", "poly (Halley)", "poly (Newton)" , "mean time per rootsolver iteration" )
+    pyPlot3(deltaT, averageIterationPlot1,averageIterationPlot2,averageIterationPlot3, "delta T","average iterations","orginal (Newton)", "poly (Halley)", "poly (Newton)" , "average iterations need by the rootsolver " )
 
 
 
 
 
-
-def pyPlot(x,y,x_lable:str, y_lable:str,title: str, row=None):
+def pyPlot(x,y,x_label:str, y_label:str,title: str, row=None):
     y_tmp =y
     plt.plot(x,y_tmp)
-    plt.xlabel(x_lable)
-    plt.ylabel(y_lable)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+
+    plt.title(title)
+    plt.show()
+def pyPlot2(x,y1,y2,x_label:str, y_label:str,y1_label:str, y2_label:str,title: str, row=None):
+    
+    plt.plot(x,y1,label = y1_label)
+    plt.plot(x,y2, label=y2_label)
+
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+
+    plt.title(title)
+    plt.show()
+def pyPlot3(x,y1,y2,y3,x_axis_label:str, y_axis_label:str,y1_label:str, y2_label:str,y3_label:str,  title: str):
+    
+    plt.plot(x,y1,label = y1_label)
+    plt.plot(x,y2, label=y2_label)
+    plt.plot(x,y3, label =y3_label)
+
+
+    plt.xlabel(x_axis_label)
+    plt.ylabel(y_axis_label)
+    plt.legend(bbox_to_anchor=(1, 1))
 
     plt.title(title)
     plt.show()
