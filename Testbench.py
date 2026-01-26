@@ -81,9 +81,12 @@ def TestBench2(P1:Model, P2:Model,P3:Model ,timeToSimulate:int, dt: float, start
     F_plot3, _, _, _ = simulateFor(RK3,int(timeToSimulate/dt),dt,startCondition2)
 
     #plot answer
-    originalGraph = np.array( [float(F_plot1[i]) for i in range(len(F_plot1))])
-    difference1 = np.array([abs(float(F_plot1[i]-F_plot2[i][0])) for i in range(len(F_plot2))])
-    difference2 = np.array([abs(float(F_plot1[i]-F_plot3[i][0])) for i in range(len(F_plot2))])
+    originalGraph = np.array( [float(F_plot1[i][0]) for i in range(len(F_plot1))])
+    polygraphHalley =  np.array( [float(F_plot2[i][0]) for i in range(len(F_plot2))])
+    polygraphNewton =  np.array( [float(F_plot3[i][0]) for i in range(len(F_plot3))])
+
+    difference1 = np.array([abs(float(F_plot1[i][0]-F_plot2[i][0])) for i in range(len(F_plot2))])
+    difference2 = np.array([abs(float(F_plot1[i][0]-F_plot3[i][0])) for i in range(len(F_plot3))])
 
 
     errorPlot1 = []
@@ -100,7 +103,7 @@ def TestBench2(P1:Model, P2:Model,P3:Model ,timeToSimulate:int, dt: float, start
     averageIterationPlot3 = []
 
     deltaT = []
-    for i in range(5,10):#
+    for i in range(1,10):#
         numberOfSteps = 2**i
         print(numberOfSteps)
         RK1.dt = timeToSimulate/numberOfSteps
@@ -114,9 +117,9 @@ def TestBench2(P1:Model, P2:Model,P3:Model ,timeToSimulate:int, dt: float, start
         F_plotTmp3, _, iterAverage3, exeTimeMean3 = simulateForReturnMeanTime(RK3, numberOfSteps,RK3.dt,startCondition2)  
 
 
-        errorPlot1 +=[float(abs(F_plot1[-1]-(F_plotTmp1[-1])))]
-        errorPlot2 +=[float(abs(F_plot1[-1]-F_plotTmp2[-1][0]))]
-        errorPlot3 +=[float(abs(F_plot1[-1]-F_plotTmp3[-1][0]))]
+        errorPlot1 +=[float(abs(F_plot1[-1][0]-(F_plotTmp1[-1][0])))]
+        errorPlot2 +=[float(abs(F_plot1[-1][0]-F_plotTmp2[-1][0]))]
+        errorPlot3 +=[float(abs(F_plot1[-1][0]-F_plotTmp3[-1][0]))]
 
 
 
@@ -143,8 +146,9 @@ def TestBench2(P1:Model, P2:Model,P3:Model ,timeToSimulate:int, dt: float, start
     meanTimePlot2.reverse()
     meanTimePlot3.reverse()
 
-
     pyPlot(T_plot, originalGraph, "Time", "Value", "orginal Graph")
+    pyPlot(T_plot,polygraphHalley , "Time", "Value", "orginal Graph")
+
     pyPlot2(T_plot, difference1,difference2, "Time", "Value","orginal vs. poly. Halley", "orginal vs. poly. newton", "differnce between original System and ")
     pyPlot3(deltaT, errorPlot1,errorPlot2,errorPlot3, "delta T", "error","orginal (Newton)", "poly (Halley)", "poly (Newton)", "differnce depending on the step size ")
     pyPlot3(deltaT, meanTimePlot1,meanTimePlot2,meanTimePlot3, "delta T","mean time","orginal (Newton)", "poly (Halley)", "poly (Newton)" , "mean time per rootsolver iteration" )
@@ -229,22 +233,17 @@ if __name__ == "__main__":
 
     # create System 
     P1 = Model()
-    P1.nx = 1
+    P1.nx = 2
     P1.x = ca.SX.sym("x", P1.nx)
-    P1.model = ca.exp(-2*P1.x)+ ca.exp(-4*P1.x)
+    P1.model =ca.vertcat( ca.exp(-2*P1.x[0])+ ca.exp(-4*P1.x[0]),ca.exp(-2*P1.x[1])+ ca.exp(-4*P1.x[1]) )
     # create polynomialized version of the system (to solve with halleys)
     P2 = Model()
-    P2.nx =3
-    P2.x = ca.SX.sym("xw1w2",P2.nx)
-    P2.model = ca.vertcat(P2.x[1]+P2.x[2],(-2)*P2.x[1]*(P2.x[1]+P2.x[2]), (-4)*P2.x[2]*(P2.x[1]+P2.x[2]))
+    P2.nx =6
+    P2.x = ca.SX.sym("xyw1w2w3w4",P2.nx)
+    P2.model = ca.vertcat(P2.x[2]+P2.x[3],P2.x[4]+P2.x[5], -2*P2.x[2]**2-2* P2.x[2]*P2.x[3], -4*P2.x[3]**2-4* P2.x[2]*P2.x[3],
+                           -2*P2.x[4]**2-2* P2.x[4]*P2.x[5], -4*P2.x[5]**2-4* P2.x[4]*P2.x[5]  )
 
 
-
-    # create polynomialized version of the system (to solve with newton)
-    P3 = Model()
-    P3.nx =3
-    P3.x = ca.SX.sym("xw1w2Newton",P3.nx)
-    P3.model = ca.vertcat(P3.x[1]+P3.x[2],(-2)*P3.x[1]*(P3.x[1]+P3.x[2]), (-4)*P3.x[2]*(P3.x[1]+P3.x[2]))
 
 
     # simulation hyper parameter
@@ -252,9 +251,9 @@ if __name__ == "__main__":
     numOfsteps = 3
     dt = timesimu/numOfsteps
     # start Condition
-    startCondition1 = ca.DM(1)
-    startCondition2 = ca.DM([1,0.1353352832366127,0.01831563888873418]) # w1 = e^-2*1 = 0.13533... ;  w2 = e^-4*1 = 0.01831... ;
+    startCondition1 = ca.DM([1,1])
+    startCondition2 = ca.DM([1,1,0.1353352832366127,0.01831563888873418,0.1353352832366127,0.01831563888873418]) # w1 = e^-2*1 = 0.13533... ;  w2 = e^-4*1 = 0.01831... ;
     #TestBench(P1,P2,numOfsteps, dt, startCondition1, startCondition2)
 
-    TestBench2(P1,P2,P3,100,0.01,startCondition1,startCondition2)
+    TestBench2(P1,P2,P2,100,0.01,startCondition1,startCondition2)
     
