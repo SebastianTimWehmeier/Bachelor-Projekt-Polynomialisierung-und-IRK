@@ -232,6 +232,15 @@ def simulateForReturnMeanTime(ImRK: IRK,numOfSteps:int, dt:float ,startcondition
 def TestBench3(P1:Model, P2:Model, startCondition1, startCondition2):
     evalPoint = [0.01,0.02,0.05,0.1,0.2,0.5,1,2,5,10,20,50]
     enddiff = []
+    enddiff3 = []
+
+    iter2 = []
+    iter3 = []
+
+    meant2 = []
+    meant3 = []
+
+
     RK1 = IRK(P1,"Newton", 0.01,100000,1e-12,stages=2)
 
     # simulate
@@ -240,11 +249,24 @@ def TestBench3(P1:Model, P2:Model, startCondition1, startCondition2):
 
     for dt in evalPoint:
         RK2 = IRK(P2, "Halleys",dt, 100000,1e-6, stages=3)
-        F_plot2, T_plot2,needed_iterations_plot2, executionTimePlot2 = simulateFor(RK2, int(100/dt),dt,startCondition2)
+        RK3 = IRK(P2, "Newton",dt, 100000,1e-6, stages=3)
+
+        F_plot2, T_plot2, needIter2, meantime2 = simulateForReturnMeanTime(RK2, int(100/dt),dt,startCondition2)
+        F_plot3, T_plot3,needIter3, meantime3 = simulateForReturnMeanTime(RK3, int(100/dt),dt,startCondition2)
+
         #plot answer
         Y_Plot2 = np.array( [float(F_plot2[i][0]) for i in range(len(F_plot2))])
+        Y_Plot3 = np.array( [float(F_plot3[i][0]) for i in range(len(F_plot3))])
+
         #Y_Plot3 = np.array( [abs(float(F_plot1[i][0]-F_plot2[i][0])) for i in range(len(F_plot2))])
-        enddiff+=[abs(float(F_plot1[-1][0])- Y_Plot2[-1])]
+        enddiff+=[math.log(abs(float(F_plot1[-1][0])- Y_Plot2[-1]))]
+        enddiff3+=[math.log(abs(float(F_plot1[-1][0])- Y_Plot3[-1]))]
+        iter2 +=[math.log(needIter2)]
+        iter3 +=[math.log(needIter3)]
+        meant2 +=[ math.log(meantime2)]
+        meant3 +=[ math.log(meantime3)]
+
+
 
 
 
@@ -254,20 +276,28 @@ def TestBench3(P1:Model, P2:Model, startCondition1, startCondition2):
     #x_plot2 = np.array(evalPoint, dtype=float)
 
 
-    plt.figure( figsize = (14,9))
     
 
 
 
-    plt.subplot(2,4,1)
     plt.plot(x_plot,Y_Plot1)
     plt.title("solved with Newton")
+    plt.show()
 
-    plt.subplot(2,4,2)
     plt.plot(x_plot2,enddiff)
-    plt.title("")
+    plt.plot(x_plot2,enddiff3)
 
+    plt.title("")
+    plt.show()
+
+    
+    plt.plot(x_plot2,iter2)
+    plt.plot(x_plot2,iter3)
+    plt.show()
    
+    plt.plot(x_plot2,meant2)
+    plt.plot(x_plot2,meant3)
+    plt.show()
 
     # ax = plt.subplot(2,4,4)
     # plt.plot(x_plot[1:], needed_iterations_plot1, label= 'Newton')
