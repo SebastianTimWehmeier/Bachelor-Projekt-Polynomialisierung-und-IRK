@@ -187,7 +187,7 @@ def pyPlot3(x,y1,y2,y3,x_axis_label:str, y_axis_label:str,y1_label:str, y2_label
 
     plt.xlabel(x_axis_label)
     plt.ylabel(y_axis_label)
-    plt.legend(bbox_to_anchor=(1, 1))
+    plt.legend(bbox_to_anchor=(0.5, 1))
 
     plt.title(title)
     plt.show()
@@ -288,17 +288,14 @@ def TestBench3(P1:Model, P2:Model, startCondition1, startCondition2):
     
 
 
-
-    plt.plot(x_plot,Y_Plot0)
-    plt.title("solved with Newton")
-    plt.show()
-
-    pyPlot3(x_plot2,enddiff1,enddiff2,enddiff3,"log(Δt)", "log(error)", "original (Newton)", "poly. (Halley)", "poly. (Newton)", "error depending on step size")
+    pyPlot(x_plot,Y_Plot0, "t", "value", "original solution")
+    
+    pyPlot3(x_plot2,enddiff1,enddiff2,enddiff3,"log(Δt)", "log(error)", "original (Newton)", "poly. (Halley)", "poly. (Newton)", "error depending on the step size")
     
 
-    pyPlot3(x_plot2, iter1,iter2,iter3, "log(Δt)", "log(average iteration)","original (Newton)", "poly. (Halley)", "poly. (Newton)","average iteration depending on step size" )
+    pyPlot3(x_plot2, iter1,iter2,iter3, "log(Δt)", "log(average iteration)","original (Newton)", "poly. (Halley)", "poly. (Newton)","average iteration depending on the step size" )
    
-    pyPlot3(x_plot2, meant1,meant2,meant3, "log(Δt)", "log(mean time per iteration)","original (Newton)", "poly. (Halley)", "poly. (Newton)","mean time per iteration depending on step size" )
+    pyPlot3(x_plot2, meant1,meant2,meant3, "log(Δt)", "log(mean time per iteration)","original (Newton)", "poly. (Halley)", "poly. (Newton)","mean time per iteration depending on the step size" )
   
 
 
