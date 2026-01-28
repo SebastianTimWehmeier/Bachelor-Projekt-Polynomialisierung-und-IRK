@@ -230,39 +230,48 @@ def simulateForReturnMeanTime(ImRK: IRK,numOfSteps:int, dt:float ,startcondition
 
 
 def TestBench3(P1:Model, P2:Model, startCondition1, startCondition2):
-    evalPoint = [0.01,0.02,0.05,0.1,0.2,0.5,1,2,5,10,20,50]
-    enddiff = []
+    evalPoint = [0.02,0.05,0.1,0.2,0.5,1,2,5,10,20,50]
+    enddiff1 = []
+    enddiff2 = []
     enddiff3 = []
 
+    iter1 = []
     iter2 = []
     iter3 = []
 
+    meant1 = []
     meant2 = []
     meant3 = []
 
 
-    RK1 = IRK(P1,"Newton", 0.01,100000,1e-12,stages=2)
+    RK0 = IRK(P1,"Newton", 0.01,100000,1e-12,stages=2)
 
     # simulate
-    F_plot1, T_plot,  needed_iterations_plot1,executionTimePlot1 = simulateFor(RK1, 10000,0.01,startCondition1)
-    Y_Plot1 = np.array( [float(F_plot1[i][0]) for i in range(len(F_plot1))])
+    F_plot0, T_plot,  needed_iterations_plot1,executionTimePlot1 = simulateFor(RK0, 10000,0.01,startCondition1)
+    Y_Plot0 = np.array( [float(F_plot0[i][0]) for i in range(len(F_plot0))])
 
     for dt in evalPoint:
-        RK2 = IRK(P2, "Halleys",dt, 100000,1e-6, stages=3)
-        RK3 = IRK(P2, "Newton",dt, 100000,1e-6, stages=3)
+        RK1 = IRK(P1, "Halleys",dt, 100000,1e-6, stages=2)
+        RK2 = IRK(P2, "Halleys",dt, 100000,1e-6, stages=2)
+        RK3 = IRK(P2, "Newton",dt, 100000,1e-6, stages=2)
 
+        F_plot1, T_plot1, needIter1, meantime1 = simulateForReturnMeanTime(RK1, int(100/dt),dt,startCondition1)
         F_plot2, T_plot2, needIter2, meantime2 = simulateForReturnMeanTime(RK2, int(100/dt),dt,startCondition2)
         F_plot3, T_plot3,needIter3, meantime3 = simulateForReturnMeanTime(RK3, int(100/dt),dt,startCondition2)
 
         #plot answer
+        Y_Plot1 = np.array( [float(F_plot1[i][0]) for i in range(len(F_plot1))])
         Y_Plot2 = np.array( [float(F_plot2[i][0]) for i in range(len(F_plot2))])
         Y_Plot3 = np.array( [float(F_plot3[i][0]) for i in range(len(F_plot3))])
 
         #Y_Plot3 = np.array( [abs(float(F_plot1[i][0]-F_plot2[i][0])) for i in range(len(F_plot2))])
-        enddiff+=[math.log(abs(float(F_plot1[-1][0])- Y_Plot2[-1]))]
-        enddiff3+=[math.log(abs(float(F_plot1[-1][0])- Y_Plot3[-1]))]
+        enddiff1+=[math.log(abs(float(F_plot0[-1][0])- Y_Plot1[-1]))]
+        enddiff2+=[math.log(abs(float(F_plot0[-1][0])- Y_Plot2[-1]))]
+        enddiff3+=[math.log(abs(float(F_plot0[-1][0])- Y_Plot3[-1]))]
+        iter1 +=[math.log(needIter1)]
         iter2 +=[math.log(needIter2)]
         iter3 +=[math.log(needIter3)]
+        meant1 +=[ math.log(meantime1)]
         meant2 +=[ math.log(meantime2)]
         meant3 +=[ math.log(meantime3)]
 
@@ -280,52 +289,17 @@ def TestBench3(P1:Model, P2:Model, startCondition1, startCondition2):
 
 
 
-    plt.plot(x_plot,Y_Plot1)
+    plt.plot(x_plot,Y_Plot0)
     plt.title("solved with Newton")
     plt.show()
 
-    plt.plot(x_plot2,enddiff)
-    plt.plot(x_plot2,enddiff3)
-
-    plt.title("")
-    plt.show()
-
+    pyPlot3(x_plot2,enddiff1,enddiff2,enddiff3,"log(Δt)", "log(error)", "original (Newton)", "poly. (Halley)", "poly. (Newton)", "error depending on step size")
     
-    plt.plot(x_plot2,iter2)
-    plt.plot(x_plot2,iter3)
-    plt.show()
+
+    pyPlot3(x_plot2, iter1,iter2,iter3, "log(Δt)", "log(average iteration)","original (Newton)", "poly. (Halley)", "poly. (Newton)","average iteration depending on step size" )
    
-    plt.plot(x_plot2,meant2)
-    plt.plot(x_plot2,meant3)
-    plt.show()
-
-    # ax = plt.subplot(2,4,4)
-    # plt.plot(x_plot[1:], needed_iterations_plot1, label= 'Newton')
-    # plt.plot(x_plot[1:], needed_iterations_plot2, label = "Halley")
-    # plt.legend(bbox_to_anchor=(1, 1))
-    # plt.ylim(0,3)
-    # ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-    # plt.title("iterrations needed ")
-
-
-    # textstr = f"on average {(sum(executionTimePlot1)/(1e6*len(executionTimePlot1))):2f}"
-    # props = dict(boxstyle='round', facecolor='white', alpha=0.5)
-    
-    # plt.subplot(2,4,5)
-    # plt.plot(x_plot[1:], executionTimePlot1)
-    # plt.gca().text(0.03, 0.95, textstr, transform=plt.gca().transAxes,
-    #                 fontsize=12, verticalalignment='top', bbox=props)
-    # plt.title("execution time  (Newton)")
-
-    # plt.subplot(2,4,6)
-
-    # plt.plot(x_plot[1:], executionTimePlot2)
-    # textstr = f"on average {(sum(executionTimePlot2)/(1e6*len(executionTimePlot2))):2f}"
-    # plt.gca().text(0.03, 0.95, textstr, transform=plt.gca().transAxes,
-    #                 fontsize=12, verticalalignment='top', bbox=props)
-    # plt.title("execution time  (Halleys)")
-
-    plt.show()
+    pyPlot3(x_plot2, meant1,meant2,meant3, "log(Δt)", "log(mean time per iteration)","original (Newton)", "poly. (Halley)", "poly. (Newton)","mean time per iteration depending on step size" )
+  
 
 
 
