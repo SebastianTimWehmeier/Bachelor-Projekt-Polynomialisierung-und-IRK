@@ -174,7 +174,7 @@ def pyPlot2(x,y1,y2,x_label:str, y_label:str,y1_label:str, y2_label:str,title: s
 
     plt.xlabel(x_label)
     plt.ylabel(y_label)
-    plt.legend(bbox_to_anchor=(1, 1))
+    plt.legend(bbox_to_anchor=(0.5, 1))
 
     plt.title(title)
     plt.show()
@@ -243,6 +243,11 @@ def TestBench3(P1:Model, P2:Model, startCondition1, startCondition2):
     meant2 = []
     meant3 = []
 
+    meanTimetimesaverageIter1 = []
+    meanTimetimesaverageIter2 = []
+    meanTimetimesaverageIter3 = []
+
+
 
     RK0 = IRK(P1,"Newton", 0.01,100000,1e-12,stages=2)
 
@@ -251,9 +256,9 @@ def TestBench3(P1:Model, P2:Model, startCondition1, startCondition2):
     Y_Plot0 = np.array( [float(F_plot0[i][0]) for i in range(len(F_plot0))])
 
     for dt in evalPoint:
-        RK1 = IRK(P1, "Halleys",dt, 100000,1e-6, stages=2)
-        RK2 = IRK(P2, "Halleys",dt, 100000,1e-6, stages=2)
-        RK3 = IRK(P2, "Newton",dt, 100000,1e-6, stages=2)
+        RK1 = IRK(P1, "Halleys",dt, 100000,1e-12, stages=2)
+        RK2 = IRK(P2, "Halleys",dt, 100000,1e-12, stages=2)
+        RK3 = IRK(P2, "Newton",dt, 100000,1e-12, stages=2)
 
         F_plot1, T_plot1, needIter1, meantime1 = simulateForReturnMeanTime(RK1, int(100/dt),dt,startCondition1)
         F_plot2, T_plot2, needIter2, meantime2 = simulateForReturnMeanTime(RK2, int(100/dt),dt,startCondition2)
@@ -274,6 +279,11 @@ def TestBench3(P1:Model, P2:Model, startCondition1, startCondition2):
         meant1 +=[ math.log(meantime1)]
         meant2 +=[ math.log(meantime2)]
         meant3 +=[ math.log(meantime3)]
+        meanTimetimesaverageIter1 += [math.log(needIter1*meantime1)]
+        meanTimetimesaverageIter2 += [math.log(needIter2*meantime2)]
+        meanTimetimesaverageIter3 += [math.log(needIter3*meantime3)]
+
+
 
 
 
@@ -295,8 +305,10 @@ def TestBench3(P1:Model, P2:Model, startCondition1, startCondition2):
 
     pyPlot3(x_plot2, iter1,iter2,iter3, "log(Δt)", "log(average iteration)","original (Newton)", "poly. (Halley)", "poly. (Newton)","average iteration depending on the step size" )
    
-    pyPlot3(x_plot2, meant1,meant2,meant3, "log(Δt)", "log(mean time per iteration)","original (Newton)", "poly. (Halley)", "poly. (Newton)","mean time per iteration depending on the step size" )
-  
+    pyPlot3(x_plot2, meant1,meant2,meant3, "log(Δt)", "log(ns)","original (Newton)", "poly. (Halley)", "poly. (Newton)","mean time per iteration depending on the step size" )
+    
+    pyPlot3(x_plot2,meanTimetimesaverageIter1 ,meanTimetimesaverageIter2,meanTimetimesaverageIter3, "log(Δt)", "log(ns * average iteration count)","original (Newton)", "poly. (Halley)", "poly. (Newton)","(mean time * average iteration) depending on the step size" )
+
 
 
 
