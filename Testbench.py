@@ -7,156 +7,6 @@ import time
 from sortedcontainers import SortedList
 import math
 
-def TestBench(P1:Model, P2:Model, numOfsteps:int, dt: float, startCondition1, startCondition2):
-
-    RK1 = IRK(P1,"Newton", dt,100000,1e-12,stages=2)
-    RK2 = IRK(P2, "Halleys",dt, 100000,1e-12, stages=2)
-
-    # simulate
-    F_plot1, T_plot,  needed_iterations_plot1,executionTimePlot1 = simulateFor(RK1, numOfsteps,dt,startCondition1)
-    F_plot2, _,needed_iterations_plot2, executionTimePlot2 = simulateFor(RK2, numOfsteps,dt,startCondition2)
-
-    #plot answer
-    Y_Plot1 = np.array( [float(F_plot1[i][0]) for i in range(len(F_plot1))])
-    Y_Plot2 = np.array( [float(F_plot2[i][0]) for i in range(len(F_plot2))])
-    Y_Plot3 = np.array( [abs(float(F_plot1[i][0]-F_plot2[i][0])) for i in range(len(F_plot2))])
-
-
-
-    x_plot = np.array(T_plot, dtype=float)
-    plt.figure( figsize = (14,9))
-    
-
-
-
-    plt.subplot(2,4,1)
-    plt.plot(x_plot,Y_Plot1)
-    plt.title("solved with Newton")
-
-    plt.subplot(2,4,2)
-    plt.plot(x_plot,Y_Plot2)
-    plt.title("solved with Halleys")
-
-    plt.subplot(2,4,3)
-    plt.plot(x_plot,Y_Plot3)
-    plt.title("difference")
-
-    ax = plt.subplot(2,4,4)
-    plt.plot(x_plot[1:], needed_iterations_plot1, label= 'Newton')
-    plt.plot(x_plot[1:], needed_iterations_plot2, label = "Halley")
-    plt.legend(bbox_to_anchor=(1, 1))
-    #plt.ylim(0,3)
-    #ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.title("iterrations needed ")
-
-
-    textstr = f"on average {(sum(executionTimePlot1)/(1e6*len(executionTimePlot1))):2f}"
-    props = dict(boxstyle='round', facecolor='white', alpha=0.5)
-    
-    plt.subplot(2,4,5)
-    plt.plot(x_plot[1:], executionTimePlot1)
-    plt.gca().text(0.03, 0.95, textstr, transform=plt.gca().transAxes,
-                    fontsize=12, verticalalignment='top', bbox=props)
-    plt.title("execution time  (Newton)")
-
-    plt.subplot(2,4,6)
-
-    plt.plot(x_plot[1:], executionTimePlot2)
-    textstr = f"on average {(sum(executionTimePlot2)/(1e6*len(executionTimePlot2))):2f}"
-    plt.gca().text(0.03, 0.95, textstr, transform=plt.gca().transAxes,
-                    fontsize=12, verticalalignment='top', bbox=props)
-    plt.title("execution time  (Halleys)")
-
-    plt.show()
-
-
-def TestBench2(P1:Model, P2:Model,P3:Model ,timeToSimulate:int, dt: float, startCondition1, startCondition2):
-    RK1 = IRK(P1,"Newton", dt,10000,1e-6,stages=2)
-    RK2 = IRK(P2, "Halleys",dt, 10000,1e-6, stages=2)
-    RK3 = IRK(P3, "Newton",dt,10000,1e-6,stages=2)
-
-        
-    # simulate
-    F_plot1, T_plot, _, _ = simulateFor(RK1,int(timeToSimulate/dt),dt,startCondition1)
-    F_plot2, _, _, _ = simulateFor(RK2,int(timeToSimulate/dt),dt,startCondition2)
-    F_plot3, _, _, _ = simulateFor(RK3,int(timeToSimulate/dt),dt,startCondition2)
-
-    #plot answer
-    originalGraph = np.array( [float(F_plot1[i][0]) for i in range(len(F_plot1))])
-    polygraphHalley =  np.array( [float(F_plot2[i][0]) for i in range(len(F_plot2))])
-    polygraphNewton =  np.array( [float(F_plot3[i][0]) for i in range(len(F_plot3))])
-
-    difference1 = np.array([abs(float(F_plot1[i][0]-F_plot2[i][0])) for i in range(len(F_plot2))])
-    difference2 = np.array([abs(float(F_plot1[i][0]-F_plot3[i][0])) for i in range(len(F_plot3))])
-
-
-    errorPlot1 = []
-    meanTimePlot1 = []
-    averageIterationPlot1= []
-
-    errorPlot2 = []
-    meanTimePlot2 = []
-    averageIterationPlot2 = []
-    
-
-    errorPlot3 = []
-    meanTimePlot3 = []
-    averageIterationPlot3 = []
-
-    deltaT = []
-    for i in range(1,10):#
-        numberOfSteps = 2**i
-        print(numberOfSteps)
-        RK1.dt = timeToSimulate/numberOfSteps
-        RK2.dt = timeToSimulate/numberOfSteps
-        RK3.dt = timeToSimulate/numberOfSteps
-
-        deltaT+=[RK1.dt]
-
-        F_plotTmp1, _, iterAverage1, exeTimeMean1 = simulateForReturnMeanTime(RK1, numberOfSteps,RK1.dt,startCondition1)  
-        F_plotTmp2, _, iterAverage2, exeTimeMean2 = simulateForReturnMeanTime(RK2, numberOfSteps,RK2.dt,startCondition2)  
-        F_plotTmp3, _, iterAverage3, exeTimeMean3 = simulateForReturnMeanTime(RK3, numberOfSteps,RK3.dt,startCondition2)  
-
-
-        errorPlot1 +=[float(abs(F_plot1[-1][0]-(F_plotTmp1[-1][0])))]
-        errorPlot2 +=[float(abs(F_plot1[-1][0]-F_plotTmp2[-1][0]))]
-        errorPlot3 +=[float(abs(F_plot1[-1][0]-F_plotTmp3[-1][0]))]
-
-
-
-        meanTimePlot1 +=[exeTimeMean1]
-        meanTimePlot2 +=[exeTimeMean2]
-        meanTimePlot3 +=[exeTimeMean3]
-
-
-        averageIterationPlot1 += [iterAverage1]
-        averageIterationPlot2 += [iterAverage2]
-        averageIterationPlot3 += [iterAverage3]
-
-    T_plot,originalGraph,difference1,difference2,
-    deltaT.reverse()
-    errorPlot1.reverse()
-    errorPlot2.reverse()
-    errorPlot3.reverse()
-
-    averageIterationPlot1.reverse()
-    averageIterationPlot2.reverse()
-    averageIterationPlot3.reverse()
-
-    meanTimePlot1.reverse()
-    meanTimePlot2.reverse()
-    meanTimePlot3.reverse()
-
-    pyPlot(T_plot, originalGraph, "Time", "Value", "orginal Graph")
-    pyPlot(T_plot,polygraphHalley , "Time", "Value", "orginal Graph")
-
-    pyPlot2(T_plot, difference1,difference2, "Time", "error","orginal vs. poly. Halley", "orginal vs. poly. newton", "differnce between original System and ")
-    pyPlot3(deltaT, errorPlot1,errorPlot2,errorPlot3, "delta T", "error","orginal (Newton)", "poly (Halley)", "poly (Newton)", "differnce depending on the step size ")
-    pyPlot3(deltaT, meanTimePlot1,meanTimePlot2,meanTimePlot3, "delta T","mean time","orginal (Newton)", "poly (Halley)", "poly (Newton)" , "mean time per rootsolver iteration" )
-    pyPlot3(deltaT, averageIterationPlot1,averageIterationPlot2,averageIterationPlot3, "delta T","average iterations","orginal (Newton)", "poly (Halley)", "poly (Newton)" , "average iterations need by the rootsolver " )
-
-
-
 
 
 def pyPlot(x,y,x_label:str, y_label:str,title: str, row=None):
@@ -229,7 +79,7 @@ def simulateForReturnMeanTime(ImRK: IRK,numOfSteps:int, dt:float ,startcondition
     
 
 
-def TestBench3(P1:Model, P2:Model, startCondition1, startCondition2):
+def TestBench(P1:Model, P2:Model, startCondition1, startCondition2):
     evalPoint = [0.02,0.05,0.1,0.2,0.5,1,2,5,10,20,50]
     enddiff1 = []
     enddiff2 = []
@@ -337,8 +187,6 @@ if __name__ == "__main__":
     # start Condition
     startCondition1 = ca.DM([1,1])
     startCondition2 = ca.DM([1,1,0.1353352832366127,0.01831563888873418,0.1353352832366127,0.01831563888873418]) # w1 = e^-2*1 = 0.13533... ;  w2 = e^-4*1 = 0.01831... ;
-    #TestBench(P1,P2,numOfsteps, dt, startCondition1, startCondition2)
 
-    #TestBench2(P1,P2,P2,100,0.01,startCondition1,startCondition2)
     
-    TestBench3(P1,P2, startCondition1, startCondition2)
+    TestBench(P1,P2, startCondition1, startCondition2)
